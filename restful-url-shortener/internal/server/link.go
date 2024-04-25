@@ -12,6 +12,17 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type Response_Get struct {
+	Rel     string       `json:"rel"`
+	Href    string       `json:"href"`
+	Method  string       `json:"method"`
+	Headers []GET_Header `json:"headers,omitempty"`
+}
+
+type GET_Header struct {
+	Owner string `json:"owner"`
+}
+
 // GetLink is the function called when a user makes a request to retrieve a certain link
 func (s *serverImpl) GetLink(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// ps are the parameters attached to this route. the paramter to ByName()
@@ -26,21 +37,58 @@ func (s *serverImpl) GetLink(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 
 	// access the datastore attached to the server and try to fetch the link
-	link, err := s.linkStore.GetLink(linkId)
+	data, err := s.linkStore.GetLink(linkId)
 	if errors.Is(err, &datastore.NotFoundError{}) {
 		fmt.Printf("GetLink: no entry for linkId=%s\n", linkId)
 		w.WriteHeader(404)
 		return
 	}
 
-	// return a 302 to redirect users
-	fmt.Printf("GetLink: found link for linkId=%s, redirecting to url=%s", link.Id, link.Url)
-	w.Header().Add("Location", link.Url) // the location header is the destination URL
-	w.WriteHeader(302)                   // 302 informs the client to read the Location header for a redirection
+	// HATEOAS links
+	links := []Response_Get{
+		{
+			Rel:    "user-links",
+			Href:   "/getuserlinks",
+			Method: "GET",
+			Headers: []GET_Header{
+				{
+					Owner: "Owner-Name",
+				},
+			},
+		},
+		{
+			Rel:    "self",
+			Href:   fmt.Sprintf("/l/%s", linkId),
+			Method: "GET",
+		},
+		{
+			Rel:    "delete",
+			Href:   "/deletelink/{onwername}/{ID}",
+			Method: "DELETE",
+		},
+	}
+
+	// Structure the response
+	response := struct {
+		Data  interface{}
+		Links interface{}
+	}{
+		Data:  data,
+		Links: links,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
+	// // return a 302 to redirect users
+	// fmt.Printf("GetLink: found link for linkId=%s, redirecting to url=%s", link.Id, link.Url)
+	// w.Header().Add("Location", link.Url) // the location header is the destination URL
+	// w.WriteHeader(302)                   // 302 informs the client to read the Location header for a redirection
 }
 
 // createLinkParams represents the structure of the request body to
 // a CreateLink function call
+
 type createLinkParams struct {
 	Url string `json:"url"`
 	// temporary, eventually we'll replace this by retrieving from context
