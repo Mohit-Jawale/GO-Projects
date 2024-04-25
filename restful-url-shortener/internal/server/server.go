@@ -10,6 +10,7 @@ import (
 type Server interface {
 	GetLink(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	CreateLink(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	GetUserLinks(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 }
 
 type serverImpl struct {

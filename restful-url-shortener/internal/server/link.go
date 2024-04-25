@@ -116,10 +116,51 @@ func (s *serverImpl) CreateLink(w http.ResponseWriter, r *http.Request, _ httpro
 	w.WriteHeader(303)
 }
 
+type urlList struct {
+	Owner string   `json:"owner"`
+	Urls  []string `json:"urls"`
+}
+
 // read a header / body to get a user
 // return a list of links in json format where Owner == user passed in
 func (s *serverImpl) GetUserLinks(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	w.Write([]byte("GetUserLinks"))
+
+	ownerName, ok := r.Header["Owner"]
+
+	if !ok {
+		fmt.Println("Key not found")
+		w.WriteHeader(404)
+		return
+	}
+
+	// access the datastore attached to the server and try to fetch the link
+	links, err := s.linkStore.GetUserLinks(ownerName[0])
+
+	if errors.Is(err, &datastore.NotFoundError{}) {
+		fmt.Printf("GetUserLinks: no owner found =%s\n", ownerName)
+		w.WriteHeader(204)
+		return
+	}
+
+	response := urlList{
+		Owner: ownerName[0],
+	}
+
+	for _, obj := range links {
+
+		response.Urls = append(response.Urls, obj.Url)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	jsonData, err := json.Marshal(response)
+
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Write(jsonData)
 }
 func (s *serverImpl) DeleteLink(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Write([]byte("DeleteLink"))

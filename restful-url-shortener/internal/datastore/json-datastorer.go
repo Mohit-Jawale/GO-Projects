@@ -98,8 +98,23 @@ func (store *JsonFileStore) CreateLink(url string, owner string) (*Link, error) 
 }
 
 // GetUserLinks retrieves all links from the datastore which are owned by the given user
-func (store *JsonFileStore) GetUserLinks(user string) []Link {
-	return []Link{}
+func (store *JsonFileStore) GetUserLinks(user string) ([]Link, error) {
+
+	var links []Link
+
+	// get link for owner
+	for _, obj := range store.cache {
+
+		if obj.Owner == user {
+			links = append(links, obj)
+		}
+
+	}
+	if len(links) == 0 {
+		return nil, &NotFoundError{}
+	}
+
+	return links, nil
 }
 
 // DeleteLink deletes a link from the store's cache if it's present and then updates the file
