@@ -120,5 +120,12 @@ func (store *JsonFileStore) GetUserLinks(user string) ([]Link, error) {
 // DeleteLink deletes a link from the store's cache if it's present and then updates the file
 // in which all inkls are stored
 func (store *JsonFileStore) DeleteLink(id string, user string) error {
+
+	for idValue, obj := range store.cache {
+		if idValue == id && obj.Owner == user {
+			delete(store.cache, idValue)
+		}
+	}
+	go store.updateFile()
 	return nil
 }

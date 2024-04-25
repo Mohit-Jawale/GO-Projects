@@ -163,5 +163,30 @@ func (s *serverImpl) GetUserLinks(w http.ResponseWriter, r *http.Request, _ http
 	w.Write(jsonData)
 }
 func (s *serverImpl) DeleteLink(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	w.Write([]byte("DeleteLink"))
+
+	ownerName := ps.ByName("onwername")
+
+	//do some preemptive error checking
+	if ownerName == "" {
+		fmt.Println("No ownerName: no ownerName provided")
+		w.WriteHeader(400)
+		return
+	}
+
+	ID := ps.ByName("ID")
+
+	//do some preemptive error checking
+	if ID == "" {
+		fmt.Println("No ID: no ID provided")
+		w.WriteHeader(400)
+		return
+	}
+	// access the datastore attached to the server and try to fetch the link
+	err := s.linkStore.DeleteLink(ID, ownerName)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	w.Write([]byte("Delete link successfully"))
 }

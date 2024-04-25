@@ -21,5 +21,5 @@ type LinkStorer interface {
 	GetLink(id string) (*Link, error)
 	GetUserLinks(user string) ([]Link, error)
 	CreateLink(url string, owner string) (*Link, error)
-	DeleteLink(url string, user string) error
+	DeleteLink(ID string, user string) error
 }

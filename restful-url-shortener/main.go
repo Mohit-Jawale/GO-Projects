@@ -29,6 +29,7 @@ func main() {
 	router := httprouter.New()
 	router.GET("/l/:link", server.GetLink)
 	router.GET("/getuserlinks", server.GetUserLinks)
+	router.DELETE("/deletelink/:onwername/:ID", server.DeleteLink)
 	router.POST("/api/links", server.CreateLink)
 
 	// serve all files from the directory specified (from command line arguments)
