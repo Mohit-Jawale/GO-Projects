@@ -184,7 +184,8 @@ func (s *serverImpl) DeleteLink(w http.ResponseWriter, r *http.Request, ps httpr
 	// access the datastore attached to the server and try to fetch the link
 	err := s.linkStore.DeleteLink(ID, ownerName)
 	if err != nil {
-		w.WriteHeader(500)
+		w.WriteHeader(200)
+		w.Write([]byte("No records were deleted"))
 		return
 	}
 

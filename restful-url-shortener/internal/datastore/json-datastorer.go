@@ -121,10 +121,15 @@ func (store *JsonFileStore) GetUserLinks(user string) ([]Link, error) {
 // in which all inkls are stored
 func (store *JsonFileStore) DeleteLink(id string, user string) error {
 
+	count := 0
 	for idValue, obj := range store.cache {
 		if idValue == id && obj.Owner == user {
 			delete(store.cache, idValue)
+			count += 1
 		}
+	}
+	if count == 0 {
+		return &NotFoundError{}
 	}
 	go store.updateFile()
 	return nil
