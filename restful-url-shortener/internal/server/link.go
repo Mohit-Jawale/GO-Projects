@@ -94,6 +94,17 @@ type createLinkParams struct {
 	// temporary, eventually we'll replace this by retrieving from context
 	Owner string `json:"owner"`
 }
+type createLinkheader struct {
+	Url string `json:"url"`
+	// temporary, eventually we'll replace this by retrieving from context
+	Owner string `json:"owner"`
+}
+type Response_Post struct {
+	Rel     string             `json:"rel"`
+	Href    string             `json:"href"`
+	Method  string             `json:"method"`
+	Headers []createLinkheader `json:"headers,omitempty"`
+}
 
 func (s *serverImpl) CreateLink(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// retrieve the value of the content-type header, if none is specified
@@ -152,16 +163,58 @@ func (s *serverImpl) CreateLink(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// call the datastore function
-	link, err := s.linkStore.CreateLink(url, owner)
+	data, err := s.linkStore.CreateLink(url, owner)
 	if err != nil {
 		fmt.Printf("CreateLink: error while creating a link err=%v\n", err)
 		w.WriteHeader(500)
 		return
 	}
 
-	// redirect users
-	w.Header().Add("Location", fmt.Sprintf("/public?link=%s", link.Id))
-	w.WriteHeader(303)
+	// HATEOAS links
+	links := []Response_Post{
+		{
+			Rel:    "user-links",
+			Href:   "/getuserlinks",
+			Method: "GET",
+			Headers: []createLinkheader{
+				{
+					Owner: "Owner-Name",
+				},
+			},
+		},
+		{
+			Rel:    "self",
+			Href:   fmt.Sprintf("/api/links"),
+			Method: "POST",
+			Headers: []createLinkheader{
+				{
+					Url:   "url link to shortern",
+					Owner: "Owner name",
+				},
+			},
+		},
+		{
+			Rel:    "delete",
+			Href:   "/deletelink/{onwername}/{ID}",
+			Method: "DELETE",
+		},
+	}
+
+	// Structure the response
+	response := struct {
+		Data  interface{}
+		Links interface{}
+	}{
+		Data:  data,
+		Links: links,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
+	// // redirect users
+	// w.Header().Add("Location", fmt.Sprintf("/public?link=%s", link.Id))
+	// w.WriteHeader(303)
 }
 
 type urlList struct {
