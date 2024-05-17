@@ -29,27 +29,31 @@ var reverseRecordTypes = map[int]string{
 func resolve(name string, t constants.RecordType) []string {
 	// most of your code should go here. use a switch statement
 	// so each resolution type goes into a different function
+	resolvedValue := make([]string, 0, 0)
 
 	filePath := "dns_cache.json"
 
 	dnsCache := dnsresolver.NewDNSCache(filePath)
 	dnsCache.LoadFromDisk()
-	resolvedValue := make([]string, 0, 0)
 
 	ip := dnsCache.Get(name, reverseRecordTypes[int(t)])
 	if ip != "" {
 		resolvedValue = append(resolvedValue, ip)
-		// fmt.Printf("Found IP: %s", ip)
 
 	} else {
 
-		IP, err := dnsresolver.Resolve(name, uint16(t))
+		IP, ns, err := dnsresolver.Resolve(name, uint16(t))
 		if err != nil {
 			fmt.Println("Failed to send Query:", err)
 			return nil
 		}
-		resolvedValue = append(resolvedValue, IP)
-		dnsCache.Add(name, reverseRecordTypes[int(t)], IP, 60*time.Second)
+		if t == constants.TYPE_NS {
+			resolvedValue = append(resolvedValue, ns, IP)
+
+		} else {
+			resolvedValue = append(resolvedValue, IP)
+			dnsCache.Add(name, reverseRecordTypes[int(t)], IP, 60*time.Second)
+		}
 
 	}
 

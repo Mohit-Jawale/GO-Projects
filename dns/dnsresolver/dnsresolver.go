@@ -6,30 +6,39 @@ import (
 	"fmt"
 )
 
-func Resolve(domainName string, recordType uint16) (string, error) {
+func Resolve(domainName string, recordType uint16) (string, string, error) {
+
 	nameserver := "198.41.0.4"
+	var nsName string
+	var nsIP string
+
 	for {
-		// fmt.Printf("Querying %s for %s\n", nameserver, domainName)
-		if recordType == uint16(constants.TYPE_NS) {
-			recordType = uint16(constants.TYPE_A)
-		}
 		response, err := dnspacket.SendQuery(nameserver, domainName, recordType)
+		//fmt.Println("this is nfrkjnvskjrn", response)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		if ip := GetAnswer(*response); ip != "" {
-			return ip, nil
-		} else if nsIP := GetNameserverIP(*response, recordType); nsIP != "" {
+
+			return ip, nsName, nil
+		} else if nsIP, nsName = GetNameserverIP(*response, recordType); nsIP != "" {
 			nameserver = nsIP
+			if recordType == uint16(constants.TYPE_NS) || recordType == uint16(constants.TYPE_CNAME) {
+				recordType = uint16(constants.TYPE_A)
+			}
 		} else if nsDomain := GetNameserver(*response); nsDomain != "" {
-			println("this is nsdomain", nsDomain)
-			ip, err := Resolve(nsDomain, uint16(constants.TYPE_A))
+			ip, _, err := Resolve(nsDomain, uint16(constants.TYPE_A))
+
 			if err != nil {
-				return "", err
+				return "", "", err
 			}
 			nameserver = ip
+			if recordType == uint16(constants.TYPE_NS) || recordType == uint16(constants.TYPE_CNAME) {
+				recordType = uint16(constants.TYPE_A)
+			}
+
 		} else {
-			return "", fmt.Errorf("something went wrong")
+			return "", "", fmt.Errorf("something went wrong")
 		}
 	}
 }

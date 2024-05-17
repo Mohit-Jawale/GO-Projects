@@ -13,7 +13,12 @@ func GetNameserver(records dnspacket.DNSPacket) string {
 
 			return dnsresponse.DecodeNSName(record.Data)
 
+		} else if record.Type == uint16(constants.TYPE_CNAME) {
+
+			return dnsresponse.DecodeNSName(record.Data)
+
 		}
+
 	}
 	return ""
 }
