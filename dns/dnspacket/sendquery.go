@@ -20,7 +20,7 @@ func SendQuery(ipaddress string, domainName string, recordType uint16) (*DNSPack
 		panic(err)
 	}
 
-	// Create a UDP socket
+	// Create a udp socket
 	conn, err := net.Dial("udp", ipaddress+":53")
 
 	if err != nil {
