@@ -13,8 +13,9 @@ func Resolve(domainName string, recordType uint16) (string, string, error) {
 	var nsIP string
 
 	for {
+		// fmt.Printf("Querying %s for %s\n", nameserver, domainName)
 		response, err := dnspacket.SendQuery(nameserver, domainName, recordType)
-		//fmt.Println("this is nfrkjnvskjrn", response)
+
 		if err != nil {
 			return "", "", err
 		}
@@ -23,9 +24,9 @@ func Resolve(domainName string, recordType uint16) (string, string, error) {
 			return ip, nsName, nil
 		} else if nsIP, nsName = GetNameserverIP(*response, recordType); nsIP != "" {
 			nameserver = nsIP
-			if recordType == uint16(constants.TYPE_NS) || recordType == uint16(constants.TYPE_CNAME) {
-				recordType = uint16(constants.TYPE_A)
-			}
+			// if recordType == uint16(constants.TYPE_NS) || recordType == uint16(constants.TYPE_CNAME) {
+			// 	recordType = uint16(constants.TYPE_A)
+			// }
 		} else if nsDomain := GetNameserver(*response); nsDomain != "" {
 			ip, _, err := Resolve(nsDomain, uint16(constants.TYPE_A))
 
@@ -33,6 +34,7 @@ func Resolve(domainName string, recordType uint16) (string, string, error) {
 				return "", "", err
 			}
 			nameserver = ip
+			fmt.Println(nameserver)
 			if recordType == uint16(constants.TYPE_NS) || recordType == uint16(constants.TYPE_CNAME) {
 				recordType = uint16(constants.TYPE_A)
 			}
